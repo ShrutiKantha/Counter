@@ -1,6 +1,8 @@
-import React, { useEffect, useContext, useReducer, useCallback } from 'react';
+import React, { useState, useEffect, useContext, useReducer, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+
+const BaseUrl= 'https://counter-9c3b.onrender.com';
 
 // Counter context
 const CounterContext = React.createContext();
@@ -24,11 +26,14 @@ const counterReducer = (state, action) => {
 };
 
 const Home = () => {
+  const { state } = useContext(CounterContext);
+
   return (
     <div>
-      <h1>Welcome to Home</h1>
+      <h1>Counter : {state.count}</h1>
+      <h1>MyCounter : {state.myCount}</h1>
       <Link to="/counter">Counter</Link><br></br>
-      <Link to="/mycounter">MyCounter</Link>
+      <Link to="/MyCounter">myCounter</Link>
     </div>
   );
 };
@@ -39,7 +44,7 @@ const Counter = () => {
 
   const fetchCounter = useCallback(async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/counter');
+      const response = await axios.get(`${BaseUrl}/api/counter`);
       dispatch({ type: 'SET', count: response.data.count, myCount: response.data.myCount });
     } catch (err) {
       console.error(err);
@@ -52,7 +57,7 @@ const Counter = () => {
 
   const incrementCounter = useCallback(async () => {
     try {
-      await axios.post('http://localhost:5000/api/counter/increment');
+      await axios.post(`${BaseUrl}/api/counter/increment`);
       dispatch({ type: 'INCREMENT' });
     } catch (err) {
       console.error(err);
@@ -61,7 +66,7 @@ const Counter = () => {
 
   const decrementCounter = useCallback(async () => {
     try {
-      await axios.post('http://localhost:5000/api/counter/decrement');
+      await axios.post(`${BaseUrl}/api/counter/decrement`);
       dispatch({ type: 'DECREMENT' });
     } catch (err) {
       console.error(err);
@@ -85,7 +90,7 @@ const MyCounter = () => {
 
   const incrementMyCount = useCallback(async () => {
     try {
-      await axios.post('http://localhost:5000/api/counter/Myincrement');
+      await axios.post(`${BaseUrl}/api/counter/Myincrement`);
       dispatch({ type: 'INCREMENT_MY_COUNT' });
     } catch (err) {
       console.error(err);
@@ -94,7 +99,7 @@ const MyCounter = () => {
 
   const decrementMyCount = useCallback(async () => {
     try {
-      await axios.post('http://localhost:5000/api/counter/Mydecrement');
+      await axios.post(`${BaseUrl}/api/counter/Mydecrement`);
       dispatch({ type: 'DECREMENT_MY_COUNT' });
     } catch (err) {
       console.error(err);
