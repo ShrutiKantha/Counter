@@ -95,6 +95,26 @@ app.post('/api/counter/Mydecrement', async (req, res) => {
     }
 });
 
+
+app.post('/api/counter/storeUser', async (req, res) => {
+    try {
+        // Assuming the user information is sent in the request body
+        const { email } = req.body;
+
+        // Perform any necessary validation of the user information
+
+        // Store the user information in the database
+        // For demonstration, let's assume we store it in a new collection called 'users'
+        // You can modify this based on your database schema
+        const user = await new User({ email }).save();
+
+        res.status(201).json({ message: 'User information stored successfully', user });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
