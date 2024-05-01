@@ -2,7 +2,7 @@ import React, { useEffect, useContext, useReducer, useCallback } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 
-const BaseUrl= 'https://famous-zuccutto-6c2bd5.netlify.app/';
+const BaseUrl= 'https://counter-9c3b.onrender.com';
 
 // Counter context
 const CounterContext = React.createContext();
