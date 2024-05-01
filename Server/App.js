@@ -25,6 +25,19 @@ const counterSchema = new mongoose.Schema({
 },{ collection: 'counters' });
 const Counter = mongoose.model('Counter', counterSchema);
 
+app.get('/api/counter', async (req, res) => {
+    console.log("Reached GET method")
+    try {
+        
+        const counter = await Counter.findOne();
+        console.log(counter);
+        res.json(counter);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
 app.post('/auth/storeUser', async (req, res) => {
     try {
         const { user } = req.body;
