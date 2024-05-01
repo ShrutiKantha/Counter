@@ -1,4 +1,3 @@
-// express-server/app.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
@@ -9,26 +8,36 @@ const PORT = process.env.PORT || 5000;
 app.use(express.json());
 app.use(cors());
 
-// MongoDB Connection
 mongoose.connect('mongodb+srv://kanthashruti:shruti@cluster0.un8ghpb.mongodb.net/')
 .then(() => console.log('Connected to MongoDB'))
 .catch(err => console.error('Error connecting to MongoDB:', err));
 
-// Define counter schema and model
+const userSchema = new mongoose.Schema({
+    email: { type: String, required: true },
+    counters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Counter' }]
+});
+const User = mongoose.model('User', userSchema);
+
 const counterSchema = new mongoose.Schema({
     count: { type: Number, default: 0 },
-    myCount: { type: Number, default: 0 } //new counter var
+    myCount: { type: Number, default: 0 },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
 },{ collection: 'counters' });
 const Counter = mongoose.model('Counter', counterSchema);
 
-// Routes
-app.get('/api/counter', async (req, res) => {
-    console.log("Reached GET method")
+app.post('/auth/storeUser', async (req, res) => {
     try {
-        
-        const counter = await Counter.findOne();
-        console.log(counter);
-        res.json(counter);
+        const { user } = req.body;
+        const existingUser = await User.findOne({ email: user.email });
+        if (!existingUser) {
+            const newUser = await new User({ email: user.email }).save();
+            const counter = await new Counter({ user: newUser._id }).save();
+            newUser.counters.push(counter);
+            await newUser.save();
+            res.json({ message: 'User information stored successfully', user: newUser });
+        } else {
+            res.json({ message: 'User already exists', user: existingUser });
+        }
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });
@@ -37,26 +46,11 @@ app.get('/api/counter', async (req, res) => {
 
 app.post('/api/counter/increment', async (req, res) => {
     try {
-        let counter = await Counter.findOne();
-        if (!counter) {
-            counter = new Counter();
-        }
+        const { email } = req.body;
+        const user = await User.findOne({ email }).populate('counters');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        const counter = user.counters[0];
         counter.count++;
-        await counter.save();
-        res.json(counter);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server Error' });
-    }
-});
-
-app.post('/api/counter/Myincrement', async (req, res) => {
-    try {
-        let counter = await Counter.findOne();
-        if (!counter) {
-            counter = new Counter();
-        }
-        counter.myCount++;
         await counter.save();
         res.json(counter);
     } catch (err) {
@@ -67,11 +61,26 @@ app.post('/api/counter/Myincrement', async (req, res) => {
 
 app.post('/api/counter/decrement', async (req, res) => {
     try {
-        let counter = await Counter.findOne();
-        if (!counter) {
-            counter = new Counter();
-        }
+        const { email } = req.body;
+        const user = await User.findOne({ email }).populate('counters');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        const counter = user.counters[0];
         counter.count--;
+        await counter.save();
+        res.json(counter);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ message: 'Server Error' });
+    }
+});
+
+app.post('/api/counter/Myincrement', async (req, res) => {
+    try {
+        const { email } = req.body;
+        const user = await User.findOne({ email }).populate('counters');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        const counter = user.counters[0];
+        counter.myCount++;
         await counter.save();
         res.json(counter);
     } catch (err) {
@@ -82,33 +91,13 @@ app.post('/api/counter/decrement', async (req, res) => {
 
 app.post('/api/counter/Mydecrement', async (req, res) => {
     try {
-        let counter = await Counter.findOne();
-        if (!counter) {
-            counter = new Counter();
-        }
+        const { email } = req.body;
+        const user = await User.findOne({ email }).populate('counters');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        const counter = user.counters[0];
         counter.myCount--;
         await counter.save();
         res.json(counter);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ message: 'Server Error' });
-    }
-});
-
-
-app.post('/api/counter/storeUser', async (req, res) => {
-    try {
-        // Assuming the user information is sent in the request body
-        const { email } = req.body;
-
-        // Perform any necessary validation of the user information
-
-        // Store the user information in the database
-        // For demonstration, let's assume we store it in a new collection called 'users'
-        // You can modify this based on your database schema
-        const user = await new User({ email }).save();
-
-        res.status(201).json({ message: 'User information stored successfully', user });
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });
