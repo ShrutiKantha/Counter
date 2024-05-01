@@ -59,35 +59,17 @@ app.post('/auth/storeUser', async (req, res) => {
 app.post('/api/counter/increment', async (req, res) => {
     try {
         const { email } = req.body;
-        
-        // Find or create the user based on their email
-        let user = await User.findOne({ email });
-        if (!user) {
-            // If user doesn't exist, create a new one
-            user = await new User({ email }).save();
-        }
-        
-        // Find or create the counter for the user
-        let counter = await Counter.findOne({ user: user._id });
-        if (!counter) {
-            // If counter doesn't exist, create a new one
-            counter = await new Counter({ user: user._id }).save();
-            // Associate the counter with the user
-            user.counters.push(counter);
-            await user.save();
-        }
-        
-        // Increment the counter value
+        const user = await User.findOne({ email }).populate('counters');
+        if (!user) return res.status(404).json({ message: 'User not found' });
+        const counter = user.counters[0];
         counter.count++;
         await counter.save();
-        
         res.json(counter);
     } catch (err) {
         console.error(err);
         res.status(500).json({ message: 'Server Error' });
     }
 });
-
 
 app.post('/api/counter/decrement', async (req, res) => {
     try {
