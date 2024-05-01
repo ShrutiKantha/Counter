@@ -12,17 +12,12 @@ mongoose.connect('mongodb+srv://kanthashruti:shruti@cluster0.un8ghpb.mongodb.net
     .then(() => console.log('Connected to MongoDB'))
     .catch(err => console.error('Error connecting to MongoDB:', err));
 
-const userSchema = new mongoose.Schema({
-    email: { type: String, required: true },
-    counters: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Counter' }]
-});
-const User = mongoose.model('User', userSchema);
-
-const counterSchema = new mongoose.Schema({
-    count: { type: Number, default: 0 },
-    myCount: { type: Number, default: 0 },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
-}, { collection: 'counters' });
+    const counterSchema = new mongoose.Schema({
+        email: { type: String, required: true }, // Add email field to associate the counter with the user's email
+        count: { type: Number, default: 0 },
+        myCount: { type: Number, default: 0 },
+    });
+    
 const Counter = mongoose.model('Counter', counterSchema);
 
 app.get('/api/counter', async (req, res) => {
@@ -37,18 +32,16 @@ app.get('/api/counter', async (req, res) => {
     }
 });
 
+// Modify the '/auth/storeUser' endpoint to create a counter directly
 app.post('/auth/storeUser', async (req, res) => {
     try {
         const { user } = req.body;
-        const existingUser = await User.findOne({ email: user.email });
-        if (!existingUser) {
-            const newUser = await new User({ email: user.email }).save();
-            const counter = await new Counter({ user: newUser._id }).save();
-            newUser.counters.push(counter);
-            await newUser.save();
-            res.json({ message: 'User information stored successfully', user: newUser });
+        const existingCounter = await Counter.findOne({ email: user.email });
+        if (!existingCounter) {
+            const newCounter = await new Counter({ email: user.email }).save(); // Create counter directly
+            res.json({ message: 'User information stored successfully', counter: newCounter });
         } else {
-            res.json({ message: 'User already exists', user: existingUser });
+            res.json({ message: 'Counter already exists', counter: existingCounter });
         }
     } catch (err) {
         console.error(err);
@@ -56,12 +49,12 @@ app.post('/auth/storeUser', async (req, res) => {
     }
 });
 
+// Modify the '/api/counter/increment' endpoint to find counter by email
 app.post('/api/counter/increment', async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email }).populate('counters');
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        const counter = user.counters[0];
+        const counter = await Counter.findOne({ email });
+        if (!counter) return res.status(404).json({ message: 'Counter not found' });
         counter.count++;
         await counter.save();
         res.json(counter);
@@ -74,9 +67,8 @@ app.post('/api/counter/increment', async (req, res) => {
 app.post('/api/counter/decrement', async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email }).populate('counters');
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        const counter = user.counters[0];
+        const counter = await Counter.findOne({ email });
+        if (!counter) return res.status(404).json({ message: 'Counter not found' });
         counter.count--;
         await counter.save();
         res.json(counter);
@@ -90,9 +82,8 @@ app.post('/api/counter/decrement', async (req, res) => {
 app.post('/api/counter/Myincrement', async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email }).populate('counters');
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        const counter = user.counters[0];
+        const counter = await Counter.findOne({ email });
+        if (!counter) return res.status(404).json({ message: 'Counter not found' });
         counter.myCount++;
         await counter.save();
         res.json(counter);
@@ -105,9 +96,8 @@ app.post('/api/counter/Myincrement', async (req, res) => {
 app.post('/api/counter/Mydecrement', async (req, res) => {
     try {
         const { email } = req.body;
-        const user = await User.findOne({ email }).populate('counters');
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        const counter = user.counters[0];
+        const counter = await Counter.findOne({ email });
+        if (!counter) return res.status(404).json({ message: 'Counter not found' });
         counter.myCount--;
         await counter.save();
         res.json(counter);
